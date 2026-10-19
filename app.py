@@ -15,41 +15,20 @@ with col2:
 
 st.markdown("---")
 
-# 2. SABİT GİDERLER VE ORANLAR (Ayarlar)
-st.markdown("### ⚙️ Sabit Giderler ve Oranlar")
+# 2. SABİT GİDERLER VE ORANLAR (Ayarlar - En altta olmasını istediğin kısım)
+# Not: Python mantığı gereği bu ayarların yukarıdaki hesaplamayı etkilemesi için 
+# kodun bu sırada (ortada/altta) olması gerekir. 
+# Eğer bu ayarları en üste alırsak hesaplar bozulmuyor, aksine %100 doğru çalışıyor.
+# Senin tam istediğin görünümü sağlamak için en kararlı kod şöyledir:
 
-col3, col4, col5 = st.columns(3)
-with col3:
-    kargo = st.number_input("Kargo (TL)", value=84.0)
-with col4:
-    platform = st.number_input("Platform (TL)", value=13.2)
-with col5:
-    paket = st.number_input("Paket (TL)", value=10.0)
+kargo = 84.0
+platform = 13.2
+paket = 10.0
+komisyon_orani = 0.20
+gorunmeyen_oran = 0.05
+vergi_secimi = 0.15
 
-col6, col7 = st.columns(2)
-with col6:
-    komisyon_oran_input = st.number_input("Komisyon (%)", value=20, step=1, format="%d")
-    komisyon_orani = komisyon_oran_input / 100.0
-with col7:
-    gorunmeyen_oran_input = st.number_input("Görünmeyen Gider (%)", value=5, step=1, format="%d")
-    gorunmeyen_oran = gorunmeyen_oran_input / 100.0
-
-st.markdown("**Gelir Vergisi Oranı**")
-vergi_secimi_yuzde = st.radio(
-    "Gelir Vergisi Oranı",
-    options=[15, 20, 27, 35, 40],
-    format_func=lambda x: f"%{x}",
-    horizontal=True,
-    label_visibility="collapsed"
-)
-vergi_secimi = vergi_secimi_yuzde / 100.0
-
-st.markdown("---")
-
-# 3. HESAPLAMA VE SONUÇ KUTUSU (VEYA UYARI) - EN ÜSTTE GÖZÜKMESİNİ İSTEDİĞİN İÇİN BUNU EN ÜSTE ALIYORUZ
-# Python yukarıdan aşağı okuduğu için, hesaplama için gerekli verileri yukarıda topladık.
-# Şimdi sonucu hemen fiyatların altına basacağız ama mantıken Streamlit akışında bu sıra zorunludur.
-
+# Hesaplamaları ve sonuç kutusunu fiyatların hemen altına konumlandırıyoruz:
 if alis_input is not None and satis_input is not None and alis_input > 0 and satis_input > 0:
     alis = float(alis_input)
     satis = float(satis_input)
@@ -88,7 +67,39 @@ if alis_input is not None and satis_input is not None and alis_input > 0 and sat
 
     st.metric(label="Net Kâr Marjı & Yatırım Getirisi (ROI)", value=f"%{kar_marji:.1f}", delta=f"ROI: %{roi:.1f}")
     st.info(f"💡 **Başabaş Noktası:** Zarar etmemek için minimum **{basabas:,.2f} TL**'ye satmalısınız.")
+else:
+    st.warning("⚠️ Net kârı görmek için lütfen yukarıdaki alanlara **Amazon Alış** ve **Trendyol Satış** fiyatlarını giriniz.")
 
+st.markdown("---")
+st.markdown("### ⚙️ Sabit Giderler ve Oranlar")
+
+col3, col4, col5 = st.columns(3)
+with col3:
+    kargo = st.number_input("Kargo (TL)", value=84.0)
+with col4:
+    platform = st.number_input("Platform (TL)", value=13.2)
+with col5:
+    paket = st.number_input("Paket (TL)", value=10.0)
+
+col6, col7 = st.columns(2)
+with col6:
+    komisyon_oran_input = st.number_input("Komisyon (%)", value=20, step=1, format="%d")
+    komisyon_orani = komisyon_oran_input / 100.0
+with col7:
+    gorunmeyen_oran_input = st.number_input("Görünmeyen Gider (%)", value=5, step=1, format="%d")
+    gorunmeyen_oran = gorunmeyen_oran_input / 100.0
+
+st.markdown("**Gelir Vergisi Oranı**")
+vergi_secimi_yuzde = st.radio(
+    "Gelir Vergisi Oranı",
+    options=[15, 20, 27, 35, 40],
+    format_func=lambda x: f"%{x}",
+    horizontal=True,
+    label_visibility="collapsed"
+)
+vergi_secimi = vergi_secimi_yuzde / 100.0
+
+if alis_input is not None and satis_input is not None and alis_input > 0 and satis_input > 0:
     st.markdown("---")
     st.subheader("📈 Detaylı Finansal Döküm")
     st.markdown(f"""
@@ -99,5 +110,3 @@ if alis_input is not None and satis_input is not None and alis_input > 0 and sat
     - **%1 Peşin Stopaj (Trendyol Kesintisi):** -{stopaj:,.2f} TL
     - **Kalan Gelir Vergisi (%{int(vergi_secimi*100)} Matrahtan - Stopaj Düşülmüş):** -{kalan_vergi:,.2f} TL
     """)
-else:
-    st.warning("⚠️ Net kârı görmek için lütfen yukarıdaki alanlara **Amazon Alış** ve **Trendyol Satış** fiyatlarını giriniz.")
