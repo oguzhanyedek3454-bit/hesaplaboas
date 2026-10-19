@@ -6,7 +6,7 @@ st.title("📊 Trendyol & Amazon Kâr Analiz Paneli")
 st.markdown("Tüm vergiler, komisyonlar, kargo ve KDV mahsuplaşması dahil gerçek net kâr hesaplayıcı.")
 st.markdown("---")
 
-# 1. GİRİŞ ALANLARI (Amazon Alış ve Trendyol Satış)
+# 1. GİRİŞ ALANLARI (En üstte)
 col1, col2 = st.columns(2)
 with col1:
     alis_input = st.number_input("Amazon Alış Fiyatı (TL)", value=None, min_value=0.0, step=1.0, format="%d", placeholder="Örn: 200")
@@ -15,7 +15,7 @@ with col2:
 
 st.markdown("---")
 
-# 2. SABİT GİDERLER VE ORANLAR (Önce alıyoruz ki aşağıdaki hesaplamada güncel oranlar kullanılsın)
+# 2. ÖNCE AYARLARI TANIMLIYORUZ (Böylece aşağıda değişen değerler yukarıdaki hesabı bozmaz)
 st.markdown("### ⚙️ Sabit Giderler ve Oranlar")
 
 col3, col4, col5 = st.columns(3)
@@ -46,7 +46,7 @@ vergi_secimi = vergi_secimi_yuzde / 100.0
 
 st.markdown("---")
 
-# 3. HESAPLAMA VE SONUÇ KUTUSU (Ayarların ve girdilerin hemen altında, net ve doğru vergi hesabı ile)
+# 3. HESAPLAMA VE GÖSTERGE (Fiyatlar girildiyse sonuçları hemen burada, fiyatların altında gösteriyoruz)
 if alis_input is not None and satis_input is not None and alis_input > 0 and satis_input > 0:
     alis = float(alis_input)
     satis = float(satis_input)
@@ -72,7 +72,7 @@ if alis_input is not None and satis_input is not None and alis_input > 0 and sat
     vergi_oncesi_kar = satis - faturali_giderler - gorunmeyen - odenecek_kdv
     stopaj = (satis / 1.2) * 0.01
     
-    # 🌟 BURADA ARTIK SEÇTİĞİNİZ GÜNCEL VERGİ ORANI DOĞRUDAN KULLANILIYOR
+    # Doğru ve güncel vergi oranıyla hesaplama
     toplam_gelir_vergisi = vergi_oncesi_kar * vergi_secimi if vergi_oncesi_kar > 0 else 0
 
     kalan_vergi = toplam_gelir_vergisi - stopaj
@@ -103,5 +103,5 @@ if alis_input is not None and satis_input is not None and alis_input > 0 and sat
     - **Kalan Gelir Vergisi (%{int(vergi_secimi*100)} Matrahtan - Stopaj Düşülmüş):** -{kalan_vergi:,.2f} TL
     """)
 else:
-    # ⚠️ FİYATLAR GİRİLMEDİĞİNDE ÇIKACAK UYARI
+    # ⚠️ FİYATLAR GİRİLMEDİĞİNDE ÇIKACAK UYARI (Fiyat alanlarının hemen altında)
     st.warning("⚠️ Net kârı görmek için lütfen yukarıdaki alanlara **Amazon Alış** ve **Trendyol Satış** fiyatlarını giriniz.")
