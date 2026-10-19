@@ -15,9 +15,9 @@ with col2:
 
 st.markdown("---")
 
-# HESAPLAMA SONUÇLARI İÇİN ALAN (Ayarlar altta olsa da sonuçlar burada gösterilecek)
+# HESAPLAMA SONUÇLARI İÇİN KUTU (Ayarlar altta alınsa da hesaplama sonucu burada çıkacak)
 sonuc_alani = st.container()
-
+st.markdown("---")
 
 st.markdown("### ⚙️ Sabit Giderler ve Oranlar")
 
@@ -48,6 +48,7 @@ vergi_secimi_yuzde = st.radio(
 vergi_secimi = vergi_secimi_yuzde / 100.0
 
 
+# Girdiler mevcutsa hesaplamaları yap
 if alis_input is not None and satis_input is not None and alis_input > 0 and satis_input > 0:
     alis = float(alis_input)
     satis = float(satis_input)
@@ -69,13 +70,13 @@ if alis_input is not None and satis_input is not None and alis_input > 0 and sat
     if odenecek_kdv < 0:
         odenecek_kdv = 0
 
-    # 3. Vergi ve Kâr Hesaplamaları (DÜZELTİLEN KISIM)
+    # 3. Vergi ve Kâr Hesaplamaları
     vergi_oncesi_kar = satis - faturali_giderler - gorunmeyen - odenecek_kdv
     
     # Stopaj her halükarda (KDV hariç) satış üzerinden peşin kesilir (zarar etseniz bile bu para sizden çıkar)
     stopaj = (satis / 1.2) * 0.01 
     
-    # Yıl sonu / Dönem sonu devlete ödenecek toplam gelir vergisi matrahı
+    # Yıl sonu / Dönem sonu devlete ödenecek toplam gelir vergisi matrahı (Sadece kâr varsa vergi çıkar)
     toplam_gelir_vergisi = vergi_oncesi_kar * vergi_secimi if vergi_oncesi_kar > 0 else 0
 
     # Stopaj peşin ödendiği için toplam vergiden düşülür, kalanı ödenir
@@ -89,6 +90,7 @@ if alis_input is not None and satis_input is not None and alis_input > 0 and sat
     kar_marji = (gercek_net_kar / satis) * 100 if satis > 0 else 0
     roi = (gercek_net_kar / alis) * 100 if alis > 0 else 0
 
+    # Sonuçları, ekranın üst kısmında ayırdığımız sonuc_alani kutusuna yazdır
     with sonuc_alani:
         if gercek_net_kar > 0:
             st.success(f"### 💰 CEBE KALAN GERÇEK NET KÂR: {gercek_net_kar:,.2f} TL")
@@ -98,6 +100,7 @@ if alis_input is not None and satis_input is not None and alis_input > 0 and sat
         st.metric(label="Net Kâr Marjı & Yatırım Getirisi (ROI)", value=f"%{kar_marji:.1f}", delta=f"ROI: %{roi:.1f}")
         st.info(f"💡 **Başabaş Noktası:** Zarar etmemek için minimum **{basabas:,.2f} TL**'ye satmalısınız.")
 
+    # Detaylı döküm, ayarlar sekmesinin altında görünecek şekilde normal akışa yazılır
     st.markdown("---")
     st.subheader("📈 Detaylı Finansal Döküm")
     st.markdown(f"""
@@ -109,5 +112,6 @@ if alis_input is not None and satis_input is not None and alis_input > 0 and sat
     - **Kalan Gelir Vergisi (%{int(vergi_secimi*100)} Matrahtan - Stopaj Düşülmüş):** -{kalan_vergi:,.2f} TL
     """)
 else:
+    # Kullanıcı fiyatları girmediğinde, yukarıdaki sonuç kutusunda uyarı göster
     with sonuc_alani:
         st.warning("⚠️ Net kârı görmek için lütfen yukarıdaki alanlara **Amazon Alış** ve **Trendyol Satış** fiyatlarını giriniz.")
