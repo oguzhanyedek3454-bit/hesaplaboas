@@ -6,7 +6,7 @@ st.title("📊 Trendyol & Amazon Kâr Analiz Paneli")
 st.markdown("Tüm vergiler, komisyonlar, kargo ve KDV mahsuplaşması dahil gerçek net kâr hesaplayıcı.")
 st.markdown("---")
 
-# 1. GİRİŞ ALANLARI (En üstte)
+# 1. GİRİŞ ALANLARI
 col1, col2 = st.columns(2)
 with col1:
     alis_input = st.number_input("Amazon Alış Fiyatı (TL)", value=None, min_value=0.0, step=1.0, format="%d", placeholder="Örn: 200")
@@ -15,7 +15,7 @@ with col2:
 
 st.markdown("---")
 
-# 2. SABİT GİDERLER VE ORANLARIN TANIMLANDIĞI ALAN (Kullanıcı değiştirebilsin diye yukarıya aldık)
+# Sabit Giderler ve Oranlar (Arayüz girdileri)
 st.markdown("### ⚙️ Sabit Giderler ve Oranlar")
 
 col3, col4, col5 = st.columns(3)
@@ -46,7 +46,7 @@ vergi_secimi = vergi_secimi_yuzde / 100.0
 
 st.markdown("---")
 
-# 3. HESAPLAMALAR VE SONUÇ KUTUSU (Giderlerin hemen altında, anlık görünüm)
+# 2. HESAPLAMA VE SONUÇ KUTUSU (VEYA UYARI)
 if alis_input is not None and satis_input is not None and alis_input > 0 and satis_input > 0:
     alis = float(alis_input)
     satis = float(satis_input)
@@ -62,37 +62,26 @@ if alis_input is not None and satis_input is not None and alis_input > 0 and sat
     operasyonel = kargo + platform + paket
     faturali_giderler = alis + operasyonel + komisyon
 
-    # KDV Mahsubu (%20 KDV: Satış KDV'si - Alış/Gider KDV'si)
-    # KDV Dahil tutarlardan KDV arındırma mantığı: Tutar / 1.20 * 0.20
+    # KDV Mahsubu
     satis_kdv = satis - (satis / 1.2)
     gider_kdv = faturali_giderler - (faturali_giderler / 1.2)
     odenecek_kdv = satis_kdv - gider_kdv
     if odenecek_kdv < 0:
         odenecek_kdv = 0
 
-    # Vergi Öncesi Kâr (Ticari Kâr) = Satış (KDV hariç) - Giderler (KDV hariç) - Görünmeyen Gider - Ödenecek KDV
-    # Pratik hesap için: Satış - Faturalı Giderler - Ödenecek KDV - Görünmeyen Gider
     vergi_oncesi_kar = satis - faturali_giderler - gorunmeyen - odenecek_kdv
-
-    # Stopaj Hesaplaması (%1 Peşin Stopaj - Trendyol Hakedişi / Satışın KDV hariç tutarı üzerinden)
     stopaj = (satis / 1.2) * 0.01
-
-    # Yıllık/Dönemsel Gelir Vergisi Matrahtan hesaplanır
     toplam_gelir_vergisi = vergi_oncesi_kar * vergi_secimi if vergi_oncesi_kar > 0 else 0
 
-    # Stopaj mahsubu (Ödenen stopaj tahakkuk eden gelir vergisinden düşülür)
     kalan_vergi = toplam_gelir_vergisi - stopaj
     if kalan_vergi < 0:
         kalan_vergi = 0
 
-    # Gerçek Net Kâr = Vergi Öncesi Kâr - Toplam Gelir Vergisi (veya kalan vergi mahsubu düşülmüş hali)
-    # Doğru muhasebe mantığında mahsup düşüldükten sonra kalan net vergi yükü kârdan düşülür:
     gercek_net_kar = vergi_oncesi_kar - kalan_vergi if vergi_oncesi_kar > 0 else vergi_oncesi_kar
-    
     kar_marji = (gercek_net_kar / satis) * 100 if satis > 0 else 0
     roi = (gercek_net_kar / alis) * 100 if alis > 0 else 0
 
-    # 💰 NET KÂR / ZARAR KUTUSU
+    # 💰 CEBE KALAN NET KÂR KUTUSU (EN ÜSTTE)
     if gercek_net_kar > 0:
         st.success(f"### 💰 CEBE KALAN GERÇEK NET KÂR: {gercek_net_kar:,.2f} TL")
     else:
@@ -112,4 +101,5 @@ if alis_input is not None and satis_input is not None and alis_input > 0 and sat
     - **Kalan Gelir Vergisi (%{int(vergi_secimi*100)} Matrahtan - Stopaj Düşülmüş):** -{kalan_vergi:,.2f} TL
     """)
 else:
+    # ⚠️ FİYATLAR GİRİLMEDİĞİNDE ÇIKACAK UYARI (EN ÜSTTE)
     st.warning("⚠️ Net kârı görmek için lütfen yukarıdaki alanlara **Amazon Alış** ve **Trendyol Satış** fiyatlarını giriniz.")
