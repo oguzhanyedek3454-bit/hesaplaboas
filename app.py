@@ -6,24 +6,47 @@ st.title("📊 Trendyol & Amazon Kâr Analiz Paneli")
 st.markdown("Tüm vergiler, komisyonlar, kargo ve KDV mahsuplaşması dahil gerçek net kâr hesaplayıcı.")
 st.markdown("---")
 
-# 1. GİRİŞ ALANLARI
+# 1. GİRİŞ ALANLARI (En üstte)
 col1, col2 = st.columns(2)
 with col1:
     alis_input = st.number_input("Amazon Alış Fiyatı (TL)", value=None, min_value=0.0, step=1.0, format="%d", placeholder="Örn: 200")
 with col2:
     satis_input = st.number_input("Trendyol Satış Fiyatı (TL)", value=None, min_value=0.0, step=1.0, format="%d", placeholder="Örn: 300")
 
-# Varsayılan sabitler
-kargo = 84.0
-platform = 13.2
-paket = 10.0
-komisyon_orani = 0.20
-gorunmeyen_oran = 0.05
-vergi_secimi = 0.15
+st.markdown("---")
+
+# 2. SABİT GİDERLER VE ORANLARIN TANIMLANDIĞI ALAN (Kullanıcı değiştirebilsin diye yukarıya aldık)
+st.markdown("### ⚙️ Sabit Giderler ve Oranlar")
+
+col3, col4, col5 = st.columns(3)
+with col3:
+    kargo = st.number_input("Kargo (TL)", value=84.0)
+with col4:
+    platform = st.number_input("Platform (TL)", value=13.2)
+with col5:
+    paket = st.number_input("Paket (TL)", value=10.0)
+
+col6, col7 = st.columns(2)
+with col6:
+    komisyon_oran_input = st.number_input("Komisyon (%)", value=20, step=1, format="%d")
+    komisyon_orani = komisyon_oran_input / 100.0
+with col7:
+    gorunmeyen_oran_input = st.number_input("Görünmeyen Gider (%)", value=5, step=1, format="%d")
+    gorunmeyen_oran = gorunmeyen_oran_input / 100.0
+
+st.markdown("**Gelir Vergisi Oranı**")
+vergi_secimi_yuzde = st.radio(
+    "Gelir Vergisi Oranı",
+    options=[15, 20, 27, 35, 40],
+    format_func=lambda x: f"%{x}",
+    horizontal=True,
+    label_visibility="collapsed"
+)
+vergi_secimi = vergi_secimi_yuzde / 100.0
 
 st.markdown("---")
 
-# 🌟 2. NET KÂR KUTUSU VEYA UYARI MESAJI EN ÜSTTE (HEMEN GİRİŞLERİN ALTINDA)
+# 3. HESAPLAMALAR VE SONUÇ KUTUSU (Giderlerin hemen altında, anlık görünüm)
 if alis_input is not None and satis_input is not None and alis_input > 0 and satis_input > 0:
     alis = float(alis_input)
     satis = float(satis_input)
@@ -39,21 +62,33 @@ if alis_input is not None and satis_input is not None and alis_input > 0 and sat
     operasyonel = kargo + platform + paket
     faturali_giderler = alis + operasyonel + komisyon
 
-    # KDV Mahsubu (%20)
-    odenecek_kdv = (satis - faturali_giderler) - ((satis - faturali_giderler) / 1.2)
+    # KDV Mahsubu (%20 KDV: Satış KDV'si - Alış/Gider KDV'si)
+    # KDV Dahil tutarlardan KDV arındırma mantığı: Tutar / 1.20 * 0.20
+    satis_kdv = satis - (satis / 1.2)
+    gider_kdv = faturali_giderler - (faturali_giderler / 1.2)
+    odenecek_kdv = satis_kdv - gider_kdv
     if odenecek_kdv < 0:
         odenecek_kdv = 0
 
+    # Vergi Öncesi Kâr (Ticari Kâr) = Satış (KDV hariç) - Giderler (KDV hariç) - Görünmeyen Gider - Ödenecek KDV
+    # Pratik hesap için: Satış - Faturalı Giderler - Ödenecek KDV - Görünmeyen Gider
     vergi_oncesi_kar = satis - faturali_giderler - gorunmeyen - odenecek_kdv
 
-    # Stopaj ve Gelir Vergisi Oranı
+    # Stopaj Hesaplaması (%1 Peşin Stopaj - Trendyol Hakedişi / Satışın KDV hariç tutarı üzerinden)
     stopaj = (satis / 1.2) * 0.01
+
+    # Yıllık/Dönemsel Gelir Vergisi Matrahtan hesaplanır
     toplam_gelir_vergisi = vergi_oncesi_kar * vergi_secimi if vergi_oncesi_kar > 0 else 0
+
+    # Stopaj mahsubu (Ödenen stopaj tahakkuk eden gelir vergisinden düşülür)
     kalan_vergi = toplam_gelir_vergisi - stopaj
     if kalan_vergi < 0:
         kalan_vergi = 0
 
-    gercek_net_kar = vergi_oncesi_kar - toplam_gelir_vergisi
+    # Gerçek Net Kâr = Vergi Öncesi Kâr - Toplam Gelir Vergisi (veya kalan vergi mahsubu düşülmüş hali)
+    # Doğru muhasebe mantığında mahsup düşüldükten sonra kalan net vergi yükü kârdan düşülür:
+    gercek_net_kar = vergi_oncesi_kar - kalan_vergi if vergi_oncesi_kar > 0 else vergi_oncesi_kar
+    
     kar_marji = (gercek_net_kar / satis) * 100 if satis > 0 else 0
     roi = (gercek_net_kar / alis) * 100 if alis > 0 else 0
 
@@ -65,43 +100,7 @@ if alis_input is not None and satis_input is not None and alis_input > 0 and sat
 
     st.metric(label="Net Kâr Marjı & Yatırım Getirisi (ROI)", value=f"%{kar_marji:.1f}", delta=f"ROI: %{roi:.1f}")
     st.info(f"💡 **Başabaş Noktası:** Zarar etmemek için minimum **{basabas:,.2f} TL**'ye satmalısınız.")
-else:
-    # ⚠️ İLK AÇILIŞTA GÖRÜNECEK UYARI (EN ÜSTTE)
-    st.warning("⚠️ Net kârı görmek için lütfen yukarıdaki alanlara **Amazon Alış** ve **Trendyol Satış** fiyatlarını giriniz.")
 
-st.markdown("---")
-
-# 3. SABİT GİDERLER VE ORANLARIN DÜZENLENDİĞİ ALAN (ALT KISIM)
-st.markdown("### ⚙️ Sabit Giderler ve Oranlar")
-
-col3, col4, col5 = st.columns(3)
-with col3:
-    kargo = st.number_input("Kargo (TL)", value=kargo)
-with col4:
-    platform = st.number_input("Platform (TL)", value=platform)
-with col5:
-    paket = st.number_input("Paket (TL)", value=paket)
-
-col6, col7 = st.columns(2)
-with col6:
-    komisyon_oran_input = st.number_input("Komisyon (%)", value=int(komisyon_orani*100), step=1, format="%d")
-    komisyon_orani = komisyon_oran_input / 100.0
-with col7:
-    gorunmeyen_oran_input = st.number_input("Görünmeyen Gider (%)", value=int(gorunmeyen_oran*100), step=1, format="%d")
-    gorunmeyen_oran = gorunmeyen_oran_input / 100.0
-
-st.markdown("**Gelir Vergisi Oranı**")
-vergi_secimi_yuzde = st.radio(
-    "Gelir Vergisi Oranı",
-    options=[15, 20, 27, 35, 40],
-    format_func=lambda x: f"%{x}",
-    horizontal=True,
-    label_visibility="collapsed"
-)
-vergi_secimi = vergi_secimi_yuzde / 100.0
-
-# 4. DETAYLI FİNANSAL DÖKÜM (EN ALT KISIM)
-if alis_input is not None and satis_input is not None and alis_input > 0 and satis_input > 0:
     st.markdown("---")
     st.subheader("📈 Detaylı Finansal Döküm")
     st.markdown(f"""
@@ -110,5 +109,7 @@ if alis_input is not None and satis_input is not None and alis_input > 0 and sat
     - **Görünmeyen Gider (%{int(gorunmeyen_oran*100)}):** -{gorunmeyen:,.2f} TL
     - **Devlete Ödenecek Net KDV:** -{odenecek_kdv:,.2f} TL
     - **%1 Peşin Stopaj (Trendyol Kesintisi):** -{stopaj:,.2f} TL
-    - **Kalan Gelir Vergisi (%{int(vergi_secimi*100)} Matrahtan):** -{kalan_vergi:,.2f} TL
+    - **Kalan Gelir Vergisi (%{int(vergi_secimi*100)} Matrahtan - Stopaj Düşülmüş):** -{kalan_vergi:,.2f} TL
     """)
+else:
+    st.warning("⚠️ Net kârı görmek için lütfen yukarıdaki alanlara **Amazon Alış** ve **Trendyol Satış** fiyatlarını giriniz.")
