@@ -81,7 +81,7 @@ col6, col7 = st.columns(2)
 with col6:
     komisyon_orani = st.number_input("Komisyon (%)", value=int(komisyon_orani*100), step=1, format="%d") / 100.0
 with col7:
-    gorunmeyen_oran = st.number_input("Görünmeyen (%)", value=int(gorunmeyen_oran*100), step=1, format="%d") / 100.0
+    gorunmeyen_oran = st.number_input("Görünmeyen Gider (%)", value=int(gorunmeyen_oran*100), step=1, format="%d") / 100.0
 
 st.markdown("**Gelir Vergisi Oranı (%)**")
 vergi_yuzdesi = st.slider("Gelir Vergisi Dilimi", min_value=15, max_value=40, value=int(vergi_secimi*100), step=5, label_visibility="collapsed")
