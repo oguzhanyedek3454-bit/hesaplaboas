@@ -15,62 +15,10 @@ with col2:
 
 st.markdown("---")
 
-# 2. SABİT GİDERLER VE ORANLAR (Ayarlar - En altta olmasını istediğin kısım)
-# Not: Python mantığı gereği bu ayarların yukarıdaki hesaplamayı etkilemesi için 
-# kodun bu sırada (ortada/altta) olması gerekir. 
-# Eğer bu ayarları en üste alırsak hesaplar bozulmuyor, aksine %100 doğru çalışıyor.
-# Senin tam istediğin görünümü sağlamak için en kararlı kod şöyledir:
+# HESAPLAMA SONUÇLARI İÇİN ALAN (Ayarlar altta olsa da sonuçlar burada gösterilecek)
+sonuc_alani = st.container()
 
-kargo = 84.0
-platform = 13.2
-paket = 10.0
-komisyon_orani = 0.20
-gorunmeyen_oran = 0.05
-vergi_secimi = 0.15
 
-# Hesaplamaları ve sonuç kutusunu fiyatların hemen altına konumlandırıyoruz:
-if alis_input is not None and satis_input is not None and alis_input > 0 and satis_input > 0:
-    alis = float(alis_input)
-    satis = float(satis_input)
-
-    toplam_sabit_gider = alis + kargo + platform + paket
-    net_oran = 1 - komisyon_orani - gorunmeyen_oran
-    basabas = (toplam_sabit_gider / net_oran) if net_oran > 0 else 0
-
-    komisyon = satis * komisyon_orani
-    gorunmeyen = satis * gorunmeyen_oran
-    operasyonel = kargo + platform + paket
-    faturali_giderler = alis + operasyonel + komisyon
-
-    satis_kdv = satis - (satis / 1.2)
-    gider_kdv = faturali_giderler - (faturali_giderler / 1.2)
-    odenecek_kdv = satis_kdv - gider_kdv
-    if odenecek_kdv < 0:
-        odenecek_kdv = 0
-
-    vergi_oncesi_kar = satis - faturali_giderler - gorunmeyen - odenecek_kdv
-    stopaj = (satis / 1.2) * 0.01
-    toplam_gelir_vergisi = vergi_oncesi_kar * vergi_secimi if vergi_oncesi_kar > 0 else 0
-
-    kalan_vergi = toplam_gelir_vergisi - stopaj
-    if kalan_vergi < 0:
-        kalan_vergi = 0
-
-    gercek_net_kar = vergi_oncesi_kar - kalan_vergi if vergi_oncesi_kar > 0 else vergi_oncesi_kar
-    kar_marji = (gercek_net_kar / satis) * 100 if satis > 0 else 0
-    roi = (gercek_net_kar / alis) * 100 if alis > 0 else 0
-
-    if gercek_net_kar > 0:
-        st.success(f"### 💰 CEBE KALAN GERÇEK NET KÂR: {gercek_net_kar:,.2f} TL")
-    else:
-        st.error(f"### ❌ ZARAR: {gercek_net_kar:,.2f} TL")
-
-    st.metric(label="Net Kâr Marjı & Yatırım Getirisi (ROI)", value=f"%{kar_marji:.1f}", delta=f"ROI: %{roi:.1f}")
-    st.info(f"💡 **Başabaş Noktası:** Zarar etmemek için minimum **{basabas:,.2f} TL**'ye satmalısınız.")
-else:
-    st.warning("⚠️ Net kârı görmek için lütfen yukarıdaki alanlara **Amazon Alış** ve **Trendyol Satış** fiyatlarını giriniz.")
-
-st.markdown("---")
 st.markdown("### ⚙️ Sabit Giderler ve Oranlar")
 
 col3, col4, col5 = st.columns(3)
@@ -99,7 +47,57 @@ vergi_secimi_yuzde = st.radio(
 )
 vergi_secimi = vergi_secimi_yuzde / 100.0
 
+
 if alis_input is not None and satis_input is not None and alis_input > 0 and satis_input > 0:
+    alis = float(alis_input)
+    satis = float(satis_input)
+
+    # 1. Gider ve Komisyon Hesaplamaları
+    toplam_sabit_gider = alis + kargo + platform + paket
+    net_oran = 1 - komisyon_orani - gorunmeyen_oran
+    basabas = (toplam_sabit_gider / net_oran) if net_oran > 0 else 0
+
+    komisyon = satis * komisyon_orani
+    gorunmeyen = satis * gorunmeyen_oran
+    operasyonel = kargo + platform + paket
+    faturali_giderler = alis + operasyonel + komisyon
+
+    # 2. KDV Hesaplamaları
+    satis_kdv = satis - (satis / 1.2)
+    gider_kdv = faturali_giderler - (faturali_giderler / 1.2)
+    odenecek_kdv = satis_kdv - gider_kdv
+    if odenecek_kdv < 0:
+        odenecek_kdv = 0
+
+    # 3. Vergi ve Kâr Hesaplamaları (DÜZELTİLEN KISIM)
+    vergi_oncesi_kar = satis - faturali_giderler - gorunmeyen - odenecek_kdv
+    
+    # Stopaj her halükarda (KDV hariç) satış üzerinden peşin kesilir (zarar etseniz bile bu para sizden çıkar)
+    stopaj = (satis / 1.2) * 0.01 
+    
+    # Yıl sonu / Dönem sonu devlete ödenecek toplam gelir vergisi matrahı
+    toplam_gelir_vergisi = vergi_oncesi_kar * vergi_secimi if vergi_oncesi_kar > 0 else 0
+
+    # Stopaj peşin ödendiği için toplam vergiden düşülür, kalanı ödenir
+    kalan_vergi = toplam_gelir_vergisi - stopaj
+    if kalan_vergi < 0:
+        kalan_vergi = 0
+
+    # GERÇEK NET KÂR: Vergi öncesi kârdan hem peşin kesilen STOPAJ hem de KALAN VERGİ düşülmelidir!
+    gercek_net_kar = vergi_oncesi_kar - stopaj - kalan_vergi 
+    
+    kar_marji = (gercek_net_kar / satis) * 100 if satis > 0 else 0
+    roi = (gercek_net_kar / alis) * 100 if alis > 0 else 0
+
+    with sonuc_alani:
+        if gercek_net_kar > 0:
+            st.success(f"### 💰 CEBE KALAN GERÇEK NET KÂR: {gercek_net_kar:,.2f} TL")
+        else:
+            st.error(f"### ❌ ZARAR: {gercek_net_kar:,.2f} TL")
+
+        st.metric(label="Net Kâr Marjı & Yatırım Getirisi (ROI)", value=f"%{kar_marji:.1f}", delta=f"ROI: %{roi:.1f}")
+        st.info(f"💡 **Başabaş Noktası:** Zarar etmemek için minimum **{basabas:,.2f} TL**'ye satmalısınız.")
+
     st.markdown("---")
     st.subheader("📈 Detaylı Finansal Döküm")
     st.markdown(f"""
@@ -110,3 +108,6 @@ if alis_input is not None and satis_input is not None and alis_input > 0 and sat
     - **%1 Peşin Stopaj (Trendyol Kesintisi):** -{stopaj:,.2f} TL
     - **Kalan Gelir Vergisi (%{int(vergi_secimi*100)} Matrahtan - Stopaj Düşülmüş):** -{kalan_vergi:,.2f} TL
     """)
+else:
+    with sonuc_alani:
+        st.warning("⚠️ Net kârı görmek için lütfen yukarıdaki alanlara **Amazon Alış** ve **Trendyol Satış** fiyatlarını giriniz.")
