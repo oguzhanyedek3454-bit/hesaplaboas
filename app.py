@@ -8,9 +8,10 @@ st.markdown("---")
 
 col1, col2 = st.columns(2)
 with col1:
-    alis = st.number_input("Amazon Alış Fiyatı (TL - KDV Dahil)", value=400.0, step=10.0)
+    # value=None ve placeholder ile kutu boş başlar
+    alis_input = st.number_input("Amazon Alış Fiyatı (TL - KDV Dahil)", value=None, min_value=0.0, step=1.0, format="%d", placeholder="Örn: 400")
 with col2:
-    satis = st.number_input("Trendyol Satış Fiyatı (TL - KDV Dahil)", value=1000.0, step=10.0)
+    satis_input = st.number_input("Trendyol Satış Fiyatı (TL - KDV Dahil)", value=None, min_value=0.0, step=1.0, format="%d", placeholder="Örn: 1000")
 
 st.markdown("### ⚙️ Sabit Giderler ve Oranlar")
 col3, col4, col5 = st.columns(3)
@@ -23,53 +24,60 @@ with col5:
 
 col6, col7 = st.columns(2)
 with col6:
-    komisyon_orani = st.number_input("Trendyol Komisyonu (%)", value=20.0) / 100.0
+    komisyon_orani = st.number_input("Trendyol Komisyonu (%)", value=20, step=1, format="%d") / 100.0
 with col7:
-    gorunmeyen_oran = st.number_input("Görünmeyen Gider (%)", value=5.0) / 100.0
+    gorunmeyen_oran = st.number_input("Görünmeyen Gider (%)", value=5, step=1, format="%d") / 100.0
 
-# Hesaplamalar
-toplam_sabit_gider = alis + kargo + platform + paket
-net_oran = 1 - komisyon_orani - gorunmeyen_oran
-basabas = (toplam_sabit_gider / net_oran) if net_oran > 0 else 0
+# Eğer fiyatlar girilmemişse uyarı ver, girilmişse hesapla
+if alis_input is not None and satis_input is not None and alis_input > 0 and satis_input > 0:
+    alis = float(alis_input)
+    satis = float(satis_input)
 
-st.info(f"💡 **Başabaş Noktası:** Zarar etmemek için minimum **{basabas:,.2f} TL**'ye satmalısınız.")
+    # Hesaplamalar
+    toplam_sabit_gider = alis + kargo + platform + paket
+    net_oran = 1 - komisyon_orani - gorunmeyen_oran
+    basabas = (toplam_sabit_gider / net_oran) if net_oran > 0 else 0
 
-komisyon = satis * komisyon_orani
-gorunmeyen = satis * gorunmeyen_oran
-operasyonel = kargo + platform + paket
-faturali_giderler = alis + operasyonel + komisyon
+    st.info(f"💡 **Başabaş Noktası:** Zarar etmemek için minimum **{basabas:,.2f} TL**'ye satmalısınız.")
 
-odenecek_kdv = (satis - faturali_giderler) - ((satis - faturali_giderler) / 1.2)
-if odenecek_kdv < 0:
-    odenecek_kdv = 0
+    komisyon = satis * komisyon_orani
+    gorunmeyen = satis * gorunmeyen_oran
+    operasyonel = kargo + platform + paket
+    faturali_giderler = alis + operasyonel + komisyon
 
-vergi_oncesi_kar = satis - faturali_giderler - gorunmeyen - odenecek_kdv
+    odenecek_kdv = (satis - faturali_giderler) - ((satis - faturali_giderler) / 1.2)
+    if odenecek_kdv < 0:
+        odenecek_kdv = 0
 
-stopaj = (satis / 1.2) * 0.01
-toplam_gelir_vergisi = vergi_oncesi_kar * 0.3 if vergi_oncesi_kar > 0 else 0
-kalan_vergi = toplam_gelir_vergisi - stopaj
-if kalan_vergi < 0:
-    kalan_vergi = 0
+    vergi_oncesi_kar = satis - faturali_giderler - gorunmeyen - odenecek_kdv
 
-gercek_net_kar = vergi_oncesi_kar - toplam_gelir_vergisi
-kar_marji = (gercek_net_kar / satis) * 100 if satis > 0 else 0
-roi = (gercek_net_kar / alis) * 100 if alis > 0 else 0
+    stopaj = (satis / 1.2) * 0.01
+    toplam_gelir_vergisi = vergi_oncesi_kar * 0.3 if vergi_oncesi_kar > 0 else 0
+    kalan_vergi = toplam_gelir_vergisi - stopaj
+    if kalan_vergi < 0:
+        kalan_vergi = 0
 
-st.markdown("---")
-st.subheader("📈 Finansal Döküm")
+    gercek_net_kar = vergi_oncesi_kar - toplam_gelir_vergisi
+    kar_marji = (gercek_net_kar / satis) * 100 if satis > 0 else 0
+    roi = (gercek_net_kar / alis) * 100 if alis > 0 else 0
 
-st.markdown(f"""
-- **Trendyol Komisyonu:** -{komisyon:,.2f} TL
-- **Operasyonel Giderler (Kargo+Plt+Paket):** -{operasyonel:,.2f} TL
-- **Görünmeyen Gider (%5):** -{gorunmeyen:,.2f} TL
-- **Devlete Ödenecek Net KDV:** -{odenecek_kdv:,.2f} TL
-- **%1 Peşin Stopaj (Trendyol Kesintisi):** -{stopaj:,.2f} TL
-- **Kalan Gelir Vergisi (%30 Matrahtan):** -{kalan_vergi:,.2f} TL
-""")
+    st.markdown("---")
+    st.subheader("📈 Finansal Döküm")
 
-if gercek_net_kar > 0:
-    st.success(f"### 💰 CEBE KALAN GERÇEK NET KÂR: {gercek_net_kar:,.2f} TL")
+    st.markdown(f"""
+    - **Trendyol Komisyonu:** -{komisyon:,.2f} TL
+    - **Operasyonel Giderler (Kargo+Plt+Paket):** -{operasyonel:,.2f} TL
+    - **Görünmeyen Gider (%5):** -{gorunmeyen:,.2f} TL
+    - **Devlete Ödenecek Net KDV:** -{odenecek_kdv:,.2f} TL
+    - **%1 Peşin Stopaj (Trendyol Kesintisi):** -{stopaj:,.2f} TL
+    - **Kalan Gelir Vergisi (%30 Matrahtan):** -{kalan_vergi:,.2f} TL
+    """)
+
+    if gercek_net_kar > 0:
+        st.success(f"### 💰 CEBE KALAN GERÇEK NET KÂR: {gercek_net_kar:,.2f} TL")
+    else:
+        st.error(f"### ❌ ZARAR: {gercek_net_kar:,.2f} TL")
+
+    st.metric(label="Net Kâr Marjı & Yatırım Getirisi (ROI)", value=f"%{kar_marji:.1f}", delta=f"ROI: %{roi:.1f}")
 else:
-    st.error(f"### ❌ ZARAR: {gercek_net_kar:,.2f} TL")
-
-st.metric(label="Net Kâr Marjı & Yatırım Getirisi (ROI)", value=f"%{kar_marji:.1f}", delta=f"ROI: %{roi:.1f}")
+    st.warning("⚠️ Lütfen yukarıdaki alanlara **Amazon Alış** ve **Trendyol Satış** fiyatlarını giriniz.")
