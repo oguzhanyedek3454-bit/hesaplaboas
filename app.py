@@ -13,7 +13,7 @@ with col1:
 with col2:
     satis_input = st.number_input("Trendyol Satış Fiyatı (TL)", value=None, min_value=0.0, step=1.0, format="%d", placeholder="Örn: 300")
 
-# ⚙️ SABİT GİDERLER VE ORANLAR (Önce tanımlıyoruz ki hesaplamada kullanalım)
+# Varsayılan sabitler
 kargo = 84.0
 platform = 13.2
 paket = 10.0
@@ -56,7 +56,7 @@ if alis_input is not None and satis_input is not None and alis_input > 0 and sat
     roi = (gercek_net_kar / alis) * 100 if alis > 0 else 0
 
     st.markdown("---")
-    # 💰 NET KÂR / ZARAR KUTUSU (EN ÜSTTE - FİYATLARIN HEMEN ALTI)
+    # 💰 NET KÂR / ZARAR KUTUSU (EN ÜSTTE)
     if gercek_net_kar > 0:
         st.success(f"### 💰 CEBE KALAN GERÇEK NET KÂR: {gercek_net_kar:,.2f} TL")
     else:
@@ -64,7 +64,8 @@ if alis_input is not None and satis_input is not None and alis_input > 0 and sat
 
     st.metric(label="Net Kâr Marjı & Yatırım Getirisi (ROI)", value=f"%{kar_marji:.1f}", delta=f"ROI: %{roi:.1f}")
     st.info(f"💡 **Başabaş Noktası:** Zarar etmemek için minimum **{basabas:,.2f} TL**'ye satmalısınız.")
-    st.markdown("---")
+
+st.markdown("---")
 
 # 3. SABİT GİDERLER VE ORANLARIN DÜZENLENDİĞİ ALAN (ALT KISIM)
 st.markdown("### ⚙️ Sabit Giderler ve Oranlar")
@@ -79,20 +80,23 @@ with col5:
 
 col6, col7 = st.columns(2)
 with col6:
-    komisyon_orani = st.number_input("Komisyon (%)", value=int(komisyon_orani*100), step=1, format="%d") / 100.0
+    komisyon_oran_input = st.number_input("Komisyon (%)", value=int(komisyon_orani*100), step=1, format="%d")
+    komisyon_orani = komisyon_oran_input / 100.0
 with col7:
-    gorunmeyen_oran = st.number_input("Görünmeyen Gider (%)", value=int(gorunmeyen_oran*100), step=1, format="%d") / 100.0
+    # İsim güncellendi: Görünmeyen Gider (%)
+    gorunmeyen_oran_input = st.number_input("Görünmeyen Gider (%)", value=int(gorunmeyen_oran*100), step=1, format="%d")
+    gorunmeyen_oran = gorunmeyen_oran_input / 100.0
 
-st.markdown("**Gelir Vergisi Oranı (%)**")
-vergi_yuzdesi = st.slider("Gelir Vergisi Dilimi", min_value=15, max_value=40, value=int(vergi_secimi*100), step=5, label_visibility="collapsed")
-
-cols_vergi = st.columns(5)
-oran_listesi = [15, 20, 27, 35, 40]
-for i, col in enumerate(cols_vergi):
-    with col:
-        st.markdown(f"<p style='text-align: center; font-size: 13px; color: {'#10b981' if vergi_yuzdesi == oran_listesi[i] else '#94a3b8'};'><b>%{oran_listesi[i]}</b></p>", unsafe_allow_html=True)
-
-vergi_secimi = vergi_yuzdesi / 100.0
+# 🌟 GELİR VERGİSİ İÇİN YAN YANA SEÇİM BUTONLARI (RADIO / SELECTBOX ALTERNATİFİ)
+st.markdown("**Gelir Vergisi Oranı**")
+vergi_secimi_yuzde = st.radio(
+    "Gelir Vergisi Oranı",
+    options=[15, 20, 27, 35, 40],
+    format_func=lambda x: f"%{x}",
+    horizontal=True,
+    label_visibility="collapsed"
+)
+vergi_secimi = vergi_secimi_yuzde / 100.0
 
 if alis_input is not None and satis_input is not None and alis_input > 0 and satis_input > 0:
     st.markdown("---")
