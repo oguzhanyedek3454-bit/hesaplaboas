@@ -21,7 +21,9 @@ komisyon_orani = 0.20
 gorunmeyen_oran = 0.05
 vergi_secimi = 0.15
 
-# 🌟 2. HESAPLAMA VE NET KÂR KUTUSUNU HEMEN FİYATLARIN ALTINA TAŞIDIK
+st.markdown("---")
+
+# 🌟 2. NET KÂR KUTUSU VEYA UYARI MESAJI EN ÜSTTE (HEMEN GİRİŞLERİN ALTINDA)
 if alis_input is not None and satis_input is not None and alis_input > 0 and satis_input > 0:
     alis = float(alis_input)
     satis = float(satis_input)
@@ -55,8 +57,7 @@ if alis_input is not None and satis_input is not None and alis_input > 0 and sat
     kar_marji = (gercek_net_kar / satis) * 100 if satis > 0 else 0
     roi = (gercek_net_kar / alis) * 100 if alis > 0 else 0
 
-    st.markdown("---")
-    # 💰 NET KÂR / ZARAR KUTUSU (EN ÜSTTE)
+    # 💰 NET KÂR / ZARAR KUTUSU
     if gercek_net_kar > 0:
         st.success(f"### 💰 CEBE KALAN GERÇEK NET KÂR: {gercek_net_kar:,.2f} TL")
     else:
@@ -64,6 +65,9 @@ if alis_input is not None and satis_input is not None and alis_input > 0 and sat
 
     st.metric(label="Net Kâr Marjı & Yatırım Getirisi (ROI)", value=f"%{kar_marji:.1f}", delta=f"ROI: %{roi:.1f}")
     st.info(f"💡 **Başabaş Noktası:** Zarar etmemek için minimum **{basabas:,.2f} TL**'ye satmalısınız.")
+else:
+    # ⚠️ İLK AÇILIŞTA GÖRÜNECEK UYARI (EN ÜSTTE)
+    st.warning("⚠️ Net kârı görmek için lütfen yukarıdaki alanlara **Amazon Alış** ve **Trendyol Satış** fiyatlarını giriniz.")
 
 st.markdown("---")
 
@@ -83,11 +87,9 @@ with col6:
     komisyon_oran_input = st.number_input("Komisyon (%)", value=int(komisyon_orani*100), step=1, format="%d")
     komisyon_orani = komisyon_oran_input / 100.0
 with col7:
-    # İsim güncellendi: Görünmeyen Gider (%)
     gorunmeyen_oran_input = st.number_input("Görünmeyen Gider (%)", value=int(gorunmeyen_oran*100), step=1, format="%d")
     gorunmeyen_oran = gorunmeyen_oran_input / 100.0
 
-# 🌟 GELİR VERGİSİ İÇİN YAN YANA SEÇİM BUTONLARI (RADIO / SELECTBOX ALTERNATİFİ)
 st.markdown("**Gelir Vergisi Oranı**")
 vergi_secimi_yuzde = st.radio(
     "Gelir Vergisi Oranı",
@@ -98,6 +100,7 @@ vergi_secimi_yuzde = st.radio(
 )
 vergi_secimi = vergi_secimi_yuzde / 100.0
 
+# 4. DETAYLI FİNANSAL DÖKÜM (EN ALT KISIM)
 if alis_input is not None and satis_input is not None and alis_input > 0 and satis_input > 0:
     st.markdown("---")
     st.subheader("📈 Detaylı Finansal Döküm")
@@ -109,6 +112,3 @@ if alis_input is not None and satis_input is not None and alis_input > 0 and sat
     - **%1 Peşin Stopaj (Trendyol Kesintisi):** -{stopaj:,.2f} TL
     - **Kalan Gelir Vergisi (%{int(vergi_secimi*100)} Matrahtan):** -{kalan_vergi:,.2f} TL
     """)
-else:
-    st.markdown("---")
-    st.warning("⚠️ Net kârı görmek için lütfen yukarıdaki alanlara **Amazon Alış** ve **Trendyol Satış** fiyatlarını giriniz.")
