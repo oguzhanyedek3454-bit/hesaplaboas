@@ -6,7 +6,7 @@ st.title("📊 Trendyol & Amazon Kâr Analiz Paneli")
 st.markdown("Tüm vergiler, komisyonlar, kargo ve KDV mahsuplaşması dahil gerçek net kâr hesaplayıcı.")
 st.markdown("---")
 
-# 1. GİRİŞ ALANLARI
+# 1. GİRİŞ ALANLARI (En üstte)
 col1, col2 = st.columns(2)
 with col1:
     alis_input = st.number_input("Amazon Alış Fiyatı (TL)", value=None, min_value=0.0, step=1.0, format="%d", placeholder="Örn: 200")
@@ -15,7 +15,7 @@ with col2:
 
 st.markdown("---")
 
-# Sabit Giderler ve Oranlar (Arayüz girdileri)
+# 2. SABİT GİDERLER VE ORANLAR (Orta Kısım - Önce tanımlıyoruz ki hesaplamada kullanalım)
 st.markdown("### ⚙️ Sabit Giderler ve Oranlar")
 
 col3, col4, col5 = st.columns(3)
@@ -46,7 +46,7 @@ vergi_secimi = vergi_secimi_yuzde / 100.0
 
 st.markdown("---")
 
-# 2. HESAPLAMA VE SONUÇ KUTUSU (VEYA UYARI)
+# 3. HESAPLAMA VE SONUÇ KUTUSU VEYA UYARI (AYARLARIN HEMEN ALTINDA, DETAYDAN ÖNCE)
 if alis_input is not None and satis_input is not None and alis_input > 0 and satis_input > 0:
     alis = float(alis_input)
     satis = float(satis_input)
@@ -81,7 +81,7 @@ if alis_input is not None and satis_input is not None and alis_input > 0 and sat
     kar_marji = (gercek_net_kar / satis) * 100 if satis > 0 else 0
     roi = (gercek_net_kar / alis) * 100 if alis > 0 else 0
 
-    # 💰 CEBE KALAN NET KÂR KUTUSU (EN ÜSTTE)
+    # 💰 CEBE KALAN NET KÂR KUTUSU
     if gercek_net_kar > 0:
         st.success(f"### 💰 CEBE KALAN GERÇEK NET KÂR: {gercek_net_kar:,.2f} TL")
     else:
@@ -101,5 +101,5 @@ if alis_input is not None and satis_input is not None and alis_input > 0 and sat
     - **Kalan Gelir Vergisi (%{int(vergi_secimi*100)} Matrahtan - Stopaj Düşülmüş):** -{kalan_vergi:,.2f} TL
     """)
 else:
-    # ⚠️ FİYATLAR GİRİLMEDİĞİNDE ÇIKACAK UYARI (EN ÜSTTE)
+    # ⚠️ FİYATLAR GİRİLMEDİĞİNDE ÇIKACAK UYARI
     st.warning("⚠️ Net kârı görmek için lütfen yukarıdaki alanlara **Amazon Alış** ve **Trendyol Satış** fiyatlarını giriniz.")
