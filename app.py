@@ -13,6 +13,9 @@ with col1:
 with col2:
     satis_input = st.number_input("Trendyol Satış Fiyatı (TL)", value=None, min_value=0.0, step=1.0, format="%d", placeholder="Örn: 300")
 
+# ⚙️ SABİT GİDERLER VE ORANLAR (Arka planda kullanılacak değerler için önce tanımlıyoruz)
+# Ancak kullanıcı arayüzünde hızlı görmek için hesaplamayı hemen buraya alıyoruz.
+
 st.markdown("### ⚙️ Sabit Giderler ve Oranlar")
 
 col3, col4, col5 = st.columns(3)
@@ -29,13 +32,21 @@ with col6:
 with col7:
     gorunmeyen_oran = st.number_input("Görünmeyen (%)", value=5, step=1, format="%d") / 100.0
 
-# 🌟 KAYDIRMALI GELİR VERGİSİ ÇUBUĞU (Slider) - Varsayılan %15
-vergi_yuzdesi = st.slider("Gelir Vergisi Oranı (%)", min_value=15, max_value=40, value=15, step=5)
+# Gelir Vergisi Çubuğu
+st.markdown("**Gelir Vergisi Oranı (%)**")
+vergi_yuzdesi = st.slider("Gelir Vergisi Dilimi", min_value=15, max_value=40, value=15, step=5, label_visibility="collapsed")
+
+cols_vergi = st.columns(5)
+oran_listesi = [15, 20, 27, 35, 40]
+for i, col in enumerate(cols_vergi):
+    with col:
+        st.markdown(f"<p style='text-align: center; font-size: 13px; color: {'#10b981' if vergi_yuzdesi == oran_listesi[i] else '#94a3b8'};'><b>%{oran_listesi[i]}</b></p>", unsafe_allow_html=True)
+
 vergi_secimi = vergi_yuzdesi / 100.0
 
 st.markdown("---")
 
-# 2. HESAPLAMA VE SONUÇLARI EN ÜSTE TAŞIDIK
+# 🌟 2. HESAPLAMA VE NET KÂR KUTUSUNU HEMEN BURAYA (GİRİŞLERİN VE AYARLARIN ALTINA, DETAYDAN ÖNCEYE) TAŞIDIK
 if alis_input is not None and satis_input is not None and alis_input > 0 and satis_input > 0:
     alis = float(alis_input)
     satis = float(satis_input)
@@ -69,7 +80,7 @@ if alis_input is not None and satis_input is not None and alis_input > 0 and sat
     kar_marji = (gercek_net_kar / satis) * 100 if satis > 0 else 0
     roi = (gercek_net_kar / alis) * 100 if alis > 0 else 0
 
-    # 💰 NET KÂR KUTUSU EN ÜSTTE
+    # 💰 NET KÂR / ZARAR KUTUSU (EN ÜSTTE)
     if gercek_net_kar > 0:
         st.success(f"### 💰 CEBE KALAN GERÇEK NET KÂR: {gercek_net_kar:,.2f} TL")
     else:
@@ -78,7 +89,8 @@ if alis_input is not None and satis_input is not None and alis_input > 0 and sat
     st.metric(label="Net Kâr Marjı & Yatırım Getirisi (ROI)", value=f"%{kar_marji:.1f}", delta=f"ROI: %{roi:.1f}")
     st.info(f"💡 **Başabaş Noktası:** Zarar etmemek için minimum **{basabas:,.2f} TL**'ye satmalısınız.")
 
-    st.markdown("### 📈 Detaylı Finansal Döküm")
+    st.markdown("---")
+    st.subheader("📈 Detaylı Finansal Döküm")
     st.markdown(f"""
     - **Trendyol Komisyonu:** -{komisyon:,.2f} TL
     - **Operasyonel Giderler (Kargo+Plt+Paket):** -{operasyonel:,.2f} TL
